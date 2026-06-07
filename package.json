@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./tiers": "./src/tiers/index.ts",
     "./surfaces/web-smoke": "./src/surfaces/web-smoke/index.ts",
-    "./surfaces/hygiene": "./src/surfaces/hygiene/index.ts"
+    "./surfaces/hygiene": "./src/surfaces/hygiene/index.ts",
+    "./surfaces/worker-contract": "./src/surfaces/worker-contract/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
