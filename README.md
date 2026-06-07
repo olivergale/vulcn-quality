@@ -35,6 +35,6 @@ registerWebSmoke({
 });
 ```
 
-Status: v0.1 — `web-smoke` + `hygiene` surfaces + the tier model. Remaining surfaces and the reusable tier CI workflows are tracked on the `vulcn-quality` Linear project.
+Status: v0.1 — `web-smoke` + `hygiene` + `worker-contract` + `a11y` surfaces + the tier model. Remaining surfaces and the reusable tier CI workflows are tracked on the `vulcn-quality` Linear project.
 
 Canonical scope + decisions: Forum architecture doc `b96b17c1`.
