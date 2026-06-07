@@ -9,7 +9,8 @@
     "./tiers": "./src/tiers/index.ts",
     "./surfaces/web-smoke": "./src/surfaces/web-smoke/index.ts",
     "./surfaces/hygiene": "./src/surfaces/hygiene/index.ts",
-    "./surfaces/worker-contract": "./src/surfaces/worker-contract/index.ts"
+    "./surfaces/worker-contract": "./src/surfaces/worker-contract/index.ts",
+    "./surfaces/a11y": "./src/surfaces/a11y/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -17,14 +18,19 @@
     "test": "vitest run"
   },
   "peerDependencies": {
+    "@axe-core/playwright": ">=4.9",
     "@playwright/test": ">=1.40"
   },
   "peerDependenciesMeta": {
+    "@axe-core/playwright": {
+      "optional": true
+    },
     "@playwright/test": {
       "optional": true
     }
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@eslint/js": "^9.13.0",
     "@playwright/test": "^1.48.0",
     "@types/node": "^20.16.0",
