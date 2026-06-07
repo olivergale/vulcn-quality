@@ -1,0 +1,87 @@
+# quality — reusable tier gate for any Vulcn project plane (VLCN-595).
+#
+# The CI half of the one-line tier opt-in. A consumer adopts a tier with one
+# caller block in its own repo:
+#
+#   # .github/workflows/quality.yml (in the CONSUMING repo)
+#   name: quality
+#   on: [pull_request]
+#   jobs:
+#     quality:
+#       uses: olivergale/vulcn-quality/.github/workflows/quality.yml@main
+#       with:
+#         tier: 0
+#         base_url: https://staging.example.com
+#
+# The consumer ships ONE spec (e.g. quality/tier.spec.ts) that calls
+# registerTier({ tier: Number(process.env.QUALITY_TIER), baseUrl: process.env.BASE_URL!, routes: [...] }).
+# This workflow runs the BUILT deterministic web surfaces (web-smoke + hygiene at
+# tier 0; + a11y at tier 1). worker-contract runs in the consumer's own vitest
+# job; visual/perf (nightly) + fan-out-review (tier 2) land with VLCN-600/601.
+
+name: quality
+
+on:
+  workflow_call:
+    inputs:
+      tier:
+        description: "Quality tier: 0 low-touch, 1 product, 2 platform (cumulative)."
+        type: number
+        default: 0
+      base_url:
+        description: "Base URL the web surfaces run against (e.g. a deploy preview)."
+        type: string
+        required: true
+      node-version:
+        description: "Node version for setup-node."
+        type: string
+        default: "20"
+      spec-dir:
+        description: "Path to the consumer's quality spec(s) that call registerTier."
+        type: string
+        default: "quality"
+      working-directory:
+        description: "Run from this dir (monorepo / subdir consumers)."
+        type: string
+        default: "."
+      install:
+        description: "Dependency install command."
+        type: string
+        default: "npm ci"
+
+permissions:
+  contents: read
+
+jobs:
+  web-surfaces:
+    name: quality tier-${{ inputs.tier }} (web surfaces)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    # Inputs reach `run:` steps via env (not `${{ }}` interpolation) so a value
+    # can never be spliced into the shell command — avoids the script-injection
+    # shape even though workflow_call inputs come from the trusted caller.
+    env:
+      BASE_URL: ${{ inputs.base_url }}
+      QUALITY_TIER: ${{ inputs.tier }}
+      INSTALL_CMD: ${{ inputs.install }}
+      SPEC_DIR: ${{ inputs.spec-dir }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install dependencies
+        run: $INSTALL_CMD
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tier surfaces
+        run: npx playwright test "$SPEC_DIR"
