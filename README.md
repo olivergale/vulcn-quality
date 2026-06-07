@@ -35,6 +35,38 @@ registerWebSmoke({
 });
 ```
 
-Status: v0.1 — `web-smoke` + `hygiene` + `worker-contract` + `a11y` surfaces + the tier model. Remaining surfaces and the reusable tier CI workflows are tracked on the `vulcn-quality` Linear project.
+### One-line tier opt-in
+
+Rather than wiring each surface by hand, compose a whole tier in one call with `registerTier`, and adopt it in CI with one caller block.
+
+In the consuming repo, one spec (`quality/tier.spec.ts`):
+
+```ts
+import { registerTier } from "@vulcn/quality/runner";
+
+registerTier({
+  tier: Number(process.env.QUALITY_TIER ?? 0),
+  baseUrl: process.env.BASE_URL!,
+  routes: [{ path: "/", mustContain: ["Aexodus"] }],
+});
+```
+
+…and one caller workflow that runs the tier in CI:
+
+```yaml
+# .github/workflows/quality.yml (in the consuming repo)
+name: quality
+on: [pull_request]
+jobs:
+  quality:
+    uses: olivergale/vulcn-quality/.github/workflows/quality.yml@main
+    with:
+      tier: 0
+      base_url: https://staging.example.com
+```
+
+`registerTier` composes the built deterministic web surfaces for the tier (web-smoke + hygiene at tier 0; + a11y at tier 1). worker-contract runs in the consumer's own vitest-pool-workers job; `visual` / `perf` (nightly) + `fan-out-review` (tier 2) land with VLCN-600/601.
+
+Status: v0.1 — `web-smoke` + `hygiene` + `worker-contract` + `a11y` surfaces, the tier model, `registerTier`, and the reusable `quality.yml` tier workflow. Remaining surfaces (`visual` / `perf` / `fan-out-review`) are tracked on the `vulcn-quality` Linear project.
 
 Canonical scope + decisions: Forum architecture doc `b96b17c1`.
