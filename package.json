@@ -1,0 +1,35 @@
+{
+  "name": "@vulcn/quality",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vulcn quality plane — composable, reusable QC surfaces + project tiers. Consumed at arm's length by any Vulcn project plane.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tiers": "./src/tiers/index.ts",
+    "./surfaces/web-smoke": "./src/surfaces/web-smoke/index.ts",
+    "./surfaces/hygiene": "./src/surfaces/hygiene/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.16.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.10.0",
+    "vitest": "^2.1.0"
+  }
+}

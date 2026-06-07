@@ -1,0 +1,37 @@
+# manifold-eval — vulcn-quality CI gate.
+#
+# Thin caller of the shared `manifold-eval-gate` composite action's NODE profile
+# (npm ci + tsc typecheck + eslint + vitest). The job name `manifold-eval` is the
+# branch-protection required-check context.
+#
+# The library's own gate is fast + browser-free: it typechecks every surface
+# (incl. the Playwright-coupled registration fns) and unit-tests the pure surface
+# logic. The heavy Playwright/vitest-pool-workers execution runs in CONSUMER CI
+# via the reusable tier workflows (VLCN-595), not here.
+
+name: manifold-eval
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  manifold-eval:
+    name: manifold-eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: manifold-eval gate (node — vulcn-quality)
+        uses: olivergale/vulcn-manifold/.github/actions/manifold-eval-gate@974cfd5a985ecebc38564a7579809e9138f32357
+        with:
+          runtime: node
+          node-install: npm ci
+          node-typecheck: npm run typecheck
+          node-lint: npm run lint
+          node-test: npm test
