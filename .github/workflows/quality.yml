@@ -60,9 +60,14 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    # Inputs reach `run:` steps via env (not `${{ }}` interpolation) so a value
+    # can never be spliced into the shell command — avoids the script-injection
+    # shape even though workflow_call inputs come from the trusted caller.
     env:
       BASE_URL: ${{ inputs.base_url }}
       QUALITY_TIER: ${{ inputs.tier }}
+      INSTALL_CMD: ${{ inputs.install }}
+      SPEC_DIR: ${{ inputs.spec-dir }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,10 +78,10 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: ${{ inputs.install }}
+        run: $INSTALL_CMD
 
       - name: Install Playwright browser (chromium)
         run: npx playwright install --with-deps chromium
 
       - name: Run tier surfaces
-        run: npx playwright test ${{ inputs.spec-dir }}
+        run: npx playwright test "$SPEC_DIR"
