@@ -11,7 +11,9 @@
     "./surfaces/web-smoke": "./src/surfaces/web-smoke/index.ts",
     "./surfaces/hygiene": "./src/surfaces/hygiene/index.ts",
     "./surfaces/worker-contract": "./src/surfaces/worker-contract/index.ts",
-    "./surfaces/a11y": "./src/surfaces/a11y/index.ts"
+    "./surfaces/a11y": "./src/surfaces/a11y/index.ts",
+    "./surfaces/visual": "./src/surfaces/visual/index.ts",
+    "./surfaces/perf": "./src/surfaces/perf/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -1,0 +1,148 @@
+# quality-nightly — reusable nightly REPORT-ONLY surfaces (VLCN-600).
+#
+# The nightly half of the quality plane: `visual` (Playwright pixel-diff) + `perf`
+# (Lighthouse CI / Core Web Vitals budgets). Both are noisy run-to-run, so they
+# REPORT, they do NOT gate a merge — wire this on a schedule, never as a branch-
+# protection required check. A consumer adopts it with one caller block:
+#
+#   # .github/workflows/quality-nightly.yml (in the CONSUMING repo)
+#   name: quality-nightly
+#   on:
+#     schedule: [{ cron: "0 6 * * *" }]   # report; does not block PRs
+#     workflow_dispatch:
+#   jobs:
+#     nightly:
+#       uses: olivergale/vulcn-quality/.github/workflows/quality-nightly.yml@main
+#       with:
+#         tier: 1
+#         base_url: https://staging.example.com
+#
+# visual: ships ONE spec (e.g. quality/nightly.spec.ts) that calls
+#   registerNightly({ tier, baseUrl: process.env.BASE_URL!, routes: [...] }).
+#   Baselines live in the consumer repo (commit them via a local
+#   `npx playwright test --update-snapshots`); the first CI run has none and reports.
+# perf: commits a Lighthouse CI config (lighthouserc.json / .cjs) — generate it from
+#   @vulcn/quality/surfaces/perf `lighthouserc({ urls })` so budgets stay shared.
+#
+# Input keys are snake_case, matching quality.yml (locked VLCN-600).
+
+name: quality-nightly
+
+on:
+  workflow_call:
+    inputs:
+      tier:
+        description: "Quality tier: nightly surfaces compose at tier 1+ (0 composes nothing)."
+        type: number
+        default: 1
+      base_url:
+        description: "Base URL the nightly surfaces run against (e.g. staging)."
+        type: string
+        required: true
+      node_version:
+        description: "Node version for setup-node."
+        type: string
+        default: "20"
+      spec_dir:
+        description: "Path to the consumer's nightly spec(s) that call registerNightly."
+        type: string
+        default: "quality/nightly"
+      working_directory:
+        description: "Run from this dir (monorepo / subdir consumers)."
+        type: string
+        default: "."
+      install:
+        description: "Dependency install command."
+        type: string
+        default: "npm ci"
+      run_visual:
+        description: "Run the visual (screenshot pixel-diff) surface."
+        type: boolean
+        default: true
+      run_perf:
+        description: "Run the perf (Lighthouse CI) surface. Requires a committed lighthouserc."
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    name: nightly visual (tier-${{ inputs.tier }})
+    if: ${{ inputs.run_visual && inputs.tier > 0 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    # Inputs reach `run:` via env (never `${{ }}` interpolation into the shell) so a
+    # value can't be spliced into the command, even from the trusted caller.
+    env:
+      BASE_URL: ${{ inputs.base_url }}
+      QUALITY_TIER: ${{ inputs.tier }}
+      INSTALL_CMD: ${{ inputs.install }}
+      SPEC_DIR: ${{ inputs.spec_dir }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install dependencies
+        run: $INSTALL_CMD
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run visual surface (report-only)
+        run: npx playwright test "$SPEC_DIR"
+
+      - name: Upload visual report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-report
+          path: |
+            ${{ inputs.working_directory }}/playwright-report
+            ${{ inputs.working_directory }}/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  perf:
+    name: nightly perf (tier-${{ inputs.tier }})
+    if: ${{ inputs.run_perf && inputs.tier > 0 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    env:
+      BASE_URL: ${{ inputs.base_url }}
+      INSTALL_CMD: ${{ inputs.install }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install dependencies
+        run: $INSTALL_CMD
+
+      - name: Run Lighthouse CI (report-only, median of 3+)
+        run: npx --yes @lhci/cli autorun
+
+      - name: Upload Lighthouse results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: ${{ inputs.working_directory }}/.lighthouseci
+          if-no-files-found: ignore
+          retention-days: 14

@@ -23,6 +23,8 @@ name: quality
 
 on:
   workflow_call:
+    # Input keys are snake_case throughout (locked VLCN-600 before the first caller
+    # so adopters never copy a mixed snake/kebab convention).
     inputs:
       tier:
         description: "Quality tier: 0 low-touch, 1 product, 2 platform (cumulative)."
@@ -32,15 +34,15 @@ on:
         description: "Base URL the web surfaces run against (e.g. a deploy preview)."
         type: string
         required: true
-      node-version:
+      node_version:
         description: "Node version for setup-node."
         type: string
         default: "20"
-      spec-dir:
+      spec_dir:
         description: "Path to the consumer's quality spec(s) that call registerTier."
         type: string
         default: "quality"
-      working-directory:
+      working_directory:
         description: "Run from this dir (monorepo / subdir consumers)."
         type: string
         default: "."
@@ -59,7 +61,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working_directory }}
     # Inputs reach `run:` steps via env (not `${{ }}` interpolation) so a value
     # can never be spliced into the shell command — avoids the script-injection
     # shape even though workflow_call inputs come from the trusted caller.
@@ -67,7 +69,7 @@ jobs:
       BASE_URL: ${{ inputs.base_url }}
       QUALITY_TIER: ${{ inputs.tier }}
       INSTALL_CMD: ${{ inputs.install }}
-      SPEC_DIR: ${{ inputs.spec-dir }}
+      SPEC_DIR: ${{ inputs.spec_dir }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,7 +77,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node_version }}
 
       - name: Install dependencies
         run: $INSTALL_CMD
