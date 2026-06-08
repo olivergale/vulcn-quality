@@ -46,6 +46,21 @@ export function lighthouseAssertions(
   return assertions;
 }
 
+/**
+ * Where @lhci/cli sends its reports. `filesystem` keeps them local (the nightly
+ * workflow then uploads `.lighthouseci` as a PRIVATE GitHub artifact);
+ * `temporary-public-storage` posts to Google's PUBLICLY-reachable sink — a
+ * Lighthouse report can embed the audited page's DOM/screenshots, so only opt into
+ * it for a non-sensitive URL; `lhci` targets your own server.
+ */
+export type LhciUpload =
+  | { target: "filesystem"; outputDir: string }
+  | { target: "temporary-public-storage" }
+  | { target: "lhci"; serverBaseUrl: string; token: string };
+
+/** Safe default: write reports locally; no public upload. */
+export const DEFAULT_UPLOAD: LhciUpload = { target: "filesystem", outputDir: ".lighthouseci" };
+
 export interface LighthousercConfig {
   /** Absolute URLs to audit (e.g. `${BASE_URL}/`, `${BASE_URL}/deals`). */
   urls: string[];
@@ -53,25 +68,28 @@ export interface LighthousercConfig {
   budgets?: Budgets;
   /** Lighthouse runs per URL; the median is asserted. Default 3 (the noise floor). */
   numberOfRuns?: number;
+  /** Where reports go. Defaults to the local filesystem (no public upload). */
+  upload?: LhciUpload;
 }
 
 /**
- * A full @lhci/cli config object. A consumer's `lighthouserc.js` is one line:
+ * A full @lhci/cli config object. A consumer's `lighthouserc.cjs` is one line:
  * `module.exports = lighthouserc({ urls: [process.env.BASE_URL + "/"] })`.
  * Report-only by default — the nightly workflow runs it; it is not a PR gate.
+ * Reports stay local unless the consumer explicitly opts into a public sink.
  */
 export function lighthouserc(config: LighthousercConfig): {
   ci: {
     collect: { url: string[]; numberOfRuns: number };
     assert: { assertions: Record<string, LhciAssertion> };
-    upload: { target: "temporary-public-storage" };
+    upload: LhciUpload;
   };
 } {
   return {
     ci: {
       collect: { url: config.urls, numberOfRuns: config.numberOfRuns ?? 3 },
       assert: { assertions: lighthouseAssertions(config.budgets) },
-      upload: { target: "temporary-public-storage" },
+      upload: config.upload ?? DEFAULT_UPLOAD,
     },
   };
 }

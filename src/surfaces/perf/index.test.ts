@@ -28,7 +28,16 @@ describe("perf — Lighthouse CI coupling", () => {
     expect(config.ci.collect.url).toEqual(["https://staging.example.com/"]);
     expect(config.ci.collect.numberOfRuns).toBe(3);
     expect(config.ci.assert.assertions[AUDIT_IDS.lcp][1].maxNumericValue).toBe(2500);
-    expect(config.ci.upload.target).toBe("temporary-public-storage");
+  });
+
+  it("lighthouserc defaults to the local filesystem sink — never a public upload", () => {
+    const config = lighthouserc({ urls: ["x"] });
+    expect(config.ci.upload).toEqual({ target: "filesystem", outputDir: ".lighthouseci" });
+  });
+
+  it("lighthouserc lets a consumer opt into a public sink explicitly", () => {
+    const config = lighthouserc({ urls: ["x"], upload: { target: "temporary-public-storage" } });
+    expect(config.ci.upload).toEqual({ target: "temporary-public-storage" });
   });
 
   it("lighthouserc honours an explicit run count", () => {
