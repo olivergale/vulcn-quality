@@ -28,8 +28,8 @@ export interface TierRunConfig {
  * — the consumer-side half of the one-line tier opt-in. Pair it with the reusable
  * `.github/workflows/quality.yml` (the CI half). worker-contract is wired in the
  * consumer's own vitest-pool-workers job; the nightly surfaces (`visual` / `perf`)
- * go through `registerNightly` + `quality-nightly.yml`; `fan-out-review` lands with
- * VLCN-601.
+ * go through `registerNightly` + `quality-nightly.yml`; the Tier-2 `fan-out-review`
+ * surface is dispatched by manifold-review (see surfaces/fan-out-review), not here.
  *
  * In a consuming repo (`quality/tier.spec.ts`):
  * ```ts

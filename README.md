@@ -12,7 +12,7 @@ Composable, reusable QC **surfaces** + project **tiers** for the Vulcn platform.
 | `a11y` | accessibility zero-violation floor | axe-core/playwright |
 | `visual` | screenshot pixel-diff, routes × breakpoints (nightly, opt-in) | Playwright `toHaveScreenshot` (Argos optional) |
 | `perf` | Core Web Vitals budgets, median of 3+ w/ margin (nightly, opt-in) | Lighthouse CI (`@lhci/cli`) |
-| `fan-out-review` | N specialists + adversarial verifier | manifold-review |
+| `fan-out-review` | 5 specialists + adversarial verifier, union-of-blockers (not a vote) | manifold-review |
 
 ## Tiers
 
@@ -107,6 +107,19 @@ jobs:
 
 Visual baselines live in the consumer repo — commit them with a local `npx playwright test --update-snapshots` and review them like code.
 
-Status: v0.2 — `web-smoke` + `hygiene` + `worker-contract` + `a11y` (pre-merge) + `visual` + `perf` (nightly) surfaces, the tier model, `registerTier` / `registerNightly`, and the reusable `quality.yml` + `quality-nightly.yml` workflows. Remaining surface (`fan-out-review`) is tracked on the `vulcn-quality` Linear project.
+### Fan-out review (Tier 2)
+
+At Tier 2 a PR is reviewed by five INDEPENDENT specialists (correctness / a11y / perf / brand-visual / security) plus an adversarial verifier. The gate is a **union of blockers, NOT a vote** — a single grounded blocker from one seat blocks. Consensus voting buries a minority-correct finding (the "popularity trap"), so we never tally seats. Deterministic evidence (tests / axe floor / Lighthouse / worker-tests) blocks; LLM/vision judgements are advisory until a seat is calibrated against a human gold set. At Tier 2 the dispatcher is manifold-review, which already runs exactly this shape; the surface is the canonical seat roster + the gate semantics:
+
+```ts
+import { reviewOutcome } from "@vulcn/quality/surfaces/fan-out-review";
+
+// map a review tool's per-seat output → a gate decision
+const { decision, blockers, advisories } = reviewOutcome(seatResults);
+// decision === "block" iff any grounded blocker exists; brand-visual/adversarial
+// findings stay advisory unless { calibrated: ["brand-visual"] } is passed.
+```
+
+Status: v0.3 — all seven surfaces shipped: `web-smoke` + `hygiene` + `worker-contract` + `a11y` (pre-merge) + `visual` + `perf` (nightly) + `fan-out-review` (Tier 2), the tier model, `registerTier` / `registerNightly`, and the reusable `quality.yml` + `quality-nightly.yml` workflows. Project adoption (Aexodus Tier 0, enex Tier 2) is tracked on the `vulcn-quality` Linear project.
 
 Canonical scope + decisions: Forum architecture doc `b96b17c1`.
