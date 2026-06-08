@@ -11,3 +11,5 @@ export * as webSmoke from "./surfaces/web-smoke/index";
 export * as hygiene from "./surfaces/hygiene/index";
 export * as workerContract from "./surfaces/worker-contract/index";
 export * as a11y from "./surfaces/a11y/index";
+export * as visual from "./surfaces/visual/index";
+export * as perf from "./surfaces/perf/index";
