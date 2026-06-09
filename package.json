@@ -14,11 +14,7 @@
     "./surfaces/a11y": "./src/surfaces/a11y/index.ts",
     "./surfaces/visual": "./src/surfaces/visual/index.ts",
     "./surfaces/perf": "./src/surfaces/perf/index.ts",
-    "./surfaces/fan-out-review": "./src/surfaces/fan-out-review/index.ts",
-    "./surfaces/module-contract": "./src/surfaces/module-contract/index.ts"
-  },
-  "bin": {
-    "module-contract": "./src/surfaces/module-contract/cli.ts"
+    "./surfaces/fan-out-review": "./src/surfaces/fan-out-review/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
