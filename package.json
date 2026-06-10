@@ -2,7 +2,7 @@
   "name": "@vulcn/quality",
   "version": "0.1.0",
   "private": true,
-  "description": "Vulcn quality plane — composable, reusable QC surfaces + project tiers. Consumed at arm's length by any Vulcn project plane.",
+  "description": "Vulcn quality plane \u2014 composable, reusable QC surfaces + project tiers. Consumed at arm's length by any Vulcn project plane.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -19,7 +19,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run src"
   },
   "peerDependencies": {
     "@axe-core/playwright": ">=4.9",

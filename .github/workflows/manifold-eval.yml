@@ -27,8 +27,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # This repo is PUBLIC (operator call 2026-06-10, VLCN-602: consumers
+      # npm-install the git-dep anonymously) but the gate action lives in the
+      # PRIVATE vulcn-manifold — public repos cannot resolve private actions
+      # by reference, so check the action repo out via a read-only deploy key
+      # and run it from the local path. Same SHA pin as before (doctrine C1).
+      - name: Checkout manifold-eval-gate action (private repo, read-only key)
+        uses: actions/checkout@v4
+        with:
+          repository: olivergale/vulcn-manifold
+          ref: d516ca710bb3ccf747fc6b7d2060393eaf450607
+          ssh-key: ${{ secrets.MANIFOLD_GATE_SSH_KEY }}
+          path: .manifold-gate
+          persist-credentials: false
+
       - name: manifold-eval gate (node — vulcn-quality)
-        uses: olivergale/vulcn-manifold/.github/actions/manifold-eval-gate@d516ca710bb3ccf747fc6b7d2060393eaf450607
+        uses: ./.manifold-gate/.github/actions/manifold-eval-gate
         with:
           runtime: node
           node-install: npm ci
