@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: manifold-eval gate (node — vulcn-quality)
-        uses: olivergale/vulcn-manifold/.github/actions/manifold-eval-gate@974cfd5a985ecebc38564a7579809e9138f32357
+        uses: olivergale/vulcn-manifold/.github/actions/manifold-eval-gate@d516ca710bb3ccf747fc6b7d2060393eaf450607
         with:
           runtime: node
           node-install: npm ci
