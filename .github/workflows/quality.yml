@@ -82,8 +82,16 @@ jobs:
       - name: Install dependencies
         run: $INSTALL_CMD
 
+      - name: Install tsx loader (transpiles the source-TS package under node_modules)
+        run: npm install --no-save tsx
+
       - name: Install Playwright browser (chromium)
         run: npx playwright install --with-deps chromium
 
       - name: Run tier surfaces
+        # NODE_OPTIONS tsx: Node refuses to strip types under node_modules
+        # ("Stripping types is currently unsupported...") — first-consumer
+        # finding, VLCN-602. Durable dist-shipping fix tracked separately.
+        env:
+          NODE_OPTIONS: "--import tsx"
         run: npx playwright test "$SPEC_DIR"
