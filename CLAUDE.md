@@ -94,9 +94,9 @@ Non-code artifacts:
 | Artifact            | Convention                                                                  |
 | ------------------- | --------------------------------------------------------------------------- |
 | Repo path           | `~/projects/vulcn/quality/`                                                 |
-| GitHub repo         | `olivergale/vulcn-quality` (private)                                        |
+| GitHub repo         | `olivergale/vulcn-quality` (**public** since 2026-06-10 — operator call, VLCN-602: consumers npm-install the git-dep anonymously; gate action runs via read-only deploy key)                                        |
 | User-facing display | "Vulcn Quality" titlecase                                                   |
-| npm name            | `@vulcn/quality` (private; consumed as a PINNED git dep `github:olivergale/vulcn-quality#vX.Y.Z` — git TAGS are the consumption pin; `package.json` version lags them, bump tracked VLCN-613) |
+| npm name            | `@vulcn/quality` (consumed as a PINNED git dep `github:olivergale/vulcn-quality#vX.Y.Z` — git TAGS are the consumption pin; `package.json` version lags them, bump tracked VLCN-613) |
 | Branch shape        | `WO-YYYY-MM-DD-NNN/<kebab>` via `bin/next-slug.sh` (see Ship loop)          |
 
 ## CI checks
