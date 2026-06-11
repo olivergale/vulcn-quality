@@ -1,5 +1,5 @@
 {
-  "$comment": "Consumer registry for @vulcn/quality surfaces (doctrine P2.7, Forum 0db70efc; VLCN-631). A surface with no registered consumer is mis-homed — name the consuming repo+workflow before building a surface, and register it here in the same PR. status 'active' requires a VERIFIED consumer (fetch the consuming workflow, e.g. gh api repos/<owner>/<repo>/contents/<workflow> — never invent one). status 'unconsumed' is the honest empty state: src/surface-parity.test.ts enforces coverage + row shape (blocking) and console.warns unconsumed surfaces (warn-tier — consumer resolution never blocks this repo's CI).",
+  "$comment": "Consumer registry for @vulcn/quality surfaces (doctrine P2.7, Forum 0db70efc; VLCN-631). A surface with no registered consumer is mis-homed \u2014 name the consuming repo+workflow before building a surface, and register it here in the same PR. status 'active' requires a VERIFIED consumer (fetch the consuming workflow, e.g. gh api repos/<owner>/<repo>/contents/<workflow> \u2014 never invent one). status 'unconsumed' is the honest empty state: src/surface-parity.test.ts enforces coverage + row shape (blocking) and console.warns unconsumed surfaces (warn-tier \u2014 consumer resolution never blocks this repo's CI).",
   "verified_at": "2026-06-09",
   "surfaces": [
     {
@@ -18,10 +18,10 @@
     },
     {
       "surface": "hygiene",
-      "consumer_repo": null,
-      "consumer_workflow": null,
-      "status": "unconsumed",
-      "notes": "No caller of the reusable quality.yml found anywhere (gh search 'vulcn-quality/.github/workflows' returns only this repo, 2026-06-09). Aexodus Tier-0 wiring is VLCN-602 (Todo, in flight)."
+      "consumer_repo": "olivergale/aexodus",
+      "consumer_workflow": ".github/workflows/quality.yml",
+      "status": "active",
+      "notes": "ACTIVE 2026-06-11: composed at tier 0 via the same aexodus quality.yml caller as web-smoke; ran green on aexodus#10."
     },
     {
       "surface": "perf",
@@ -35,21 +35,21 @@
       "consumer_repo": null,
       "consumer_workflow": null,
       "status": "unconsumed",
-      "notes": "aexodus site/qa/visual.spec.ts runs native toHaveScreenshot and states 'no @vulcn/quality dependency until that package is published — VLCN-602' (file fetched 2026-06-09). enex ticket VLCN-610 canceled 2026-06-09."
+      "notes": "aexodus site/qa/visual.spec.ts runs native toHaveScreenshot and states 'no @vulcn/quality dependency until that package is published \u2014 VLCN-602' (file fetched 2026-06-09). enex ticket VLCN-610 canceled 2026-06-09."
     },
     {
       "surface": "web-smoke",
-      "consumer_repo": null,
-      "consumer_workflow": null,
-      "status": "unconsumed",
-      "notes": "aexodus runs a native qa pack (site/qa + .github/workflows/qa-smoke.yml) with no @vulcn/quality dependency (workflow + site/qa/package.json fetched 2026-06-09). Tier-0 caller adoption is VLCN-602 (Todo, in flight)."
+      "consumer_repo": "olivergale/aexodus",
+      "consumer_workflow": ".github/workflows/quality.yml",
+      "status": "active",
+      "notes": "ACTIVE 2026-06-11: aexodus#10 merged \u2014 Tier-0 caller of the reusable quality.yml@v0.3.1 (base_url aexodus-2026.webflow.io, quality/tier.spec.ts registerTier); ran green on the PR (52s). Informational check (calibrate-then-ratchet). Their native site/qa pack runs alongside."
     },
     {
       "surface": "worker-contract",
-      "consumer_repo": null,
+      "consumer_repo": "olivergale/aexodus",
       "consumer_workflow": null,
-      "status": "unconsumed",
-      "notes": "Extraction source olivergale/aexodus platform/src/index.ts still inlines isEmail/constantTimeEqual on main (gh search hit, 2026-06-09); the @vulcn/quality#v0.3.0 git-dep swap is in flight on an unpushed aexodus branch (VLCN-602 comment, WO-2026-06-09-020). Flip to active with consumer_repo olivergale/aexodus once the swap lands on main."
+      "status": "active",
+      "notes": "ACTIVE 2026-06-11: aexodus#10 merged \u2014 platform/src/index.ts imports isEmail/constantTimeEqual from @vulcn/quality/surfaces/worker-contract (git-dep #v0.3.0); platform/src/index.contract.test.ts (vitest-pool-workers, 10 tests) uses isFailClosedStatus. Contract test runs in the local preflight; aexodus manifold-eval.yml runs platform typecheck only \u2014 CI test leg is a consumer-side follow-up."
     }
   ]
 }
