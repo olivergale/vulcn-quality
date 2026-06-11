@@ -145,6 +145,10 @@ versa).
 
 ## Read also
 
+- **`docs/contracts/surfaces.md`** — how a surface ships HERE (file set,
+  registry-row requirement, surface-parity gate, tag-pin consumption, ship
+  loop). Read before authoring; don't reconstruct from exemplars (VLCN-638).
+
 - Forum `b96b17c1` — canonical scope + decisions (surfaces, tiers, merge-gate
   semantics)
 - Forum `0db70efc` — build-fidelity doctrine (P2.7 consumer rule; VLCN-630/631)
