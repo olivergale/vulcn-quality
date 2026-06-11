@@ -47,9 +47,9 @@
     {
       "surface": "worker-contract",
       "consumer_repo": "olivergale/aexodus",
-      "consumer_workflow": null,
+      "consumer_workflow": ".github/workflows/manifold-eval.yml",
       "status": "active",
-      "notes": "ACTIVE 2026-06-11: aexodus#10 merged \u2014 platform/src/index.ts imports isEmail/constantTimeEqual from @vulcn/quality/surfaces/worker-contract (git-dep #v0.3.0); platform/src/index.contract.test.ts (vitest-pool-workers, 10 tests) uses isFailClosedStatus. Contract test runs in the local preflight; aexodus manifold-eval.yml runs platform typecheck only \u2014 CI test leg is a consumer-side follow-up."
+      "notes": "ACTIVE 2026-06-11: aexodus#10 merged \u2014 platform/src/index.ts imports isEmail/constantTimeEqual from @vulcn/quality/surfaces/worker-contract (git-dep #v0.3.0/v0.3.1). Consuming workflow = aexodus manifold-eval.yml (node profile: npm ci + typecheck in platform/ resolves the package on every PR). The 10-test contract suite (index.contract.test.ts, vitest-pool-workers) runs in local preflight; adding it to their CI test leg is a consumer-side follow-up."
     }
   ]
 }
