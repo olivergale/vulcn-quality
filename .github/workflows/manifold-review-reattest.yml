@@ -1,0 +1,57 @@
+# manifold-review-reattest — carry a manifold-review=success across a no-op rebase.
+#
+# VLCN-541: strict branch protection + manifold-review-tied-to-head-SHA means
+# every rebase invalidates the reviewer verdict and forces a ~3-min re-run; under
+# multi-agent contention on main that causes merge starvation. When a push did
+# NOT change the PR's actual diff (identical git patch-id of the three-dot diff),
+# re-post the prior manifold-review=success to the new head SHA so the reviewer's
+# diff-judgment is carried without a re-run.
+#
+# manifold-eval (the OTHER required check) still re-runs on the new SHA, so a
+# rebase that introduces a base-integration break is still caught. This workflow
+# never weakens the gate: it only ever copies an EXISTING success when the diff
+# is provably byte-identical, and fails safe (a skip → a normal review applies).
+name: manifold-review-reattest
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: manifold-review-reattest-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  reattest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Re-attest manifold-review across a no-op rebase
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        # PPE closure (VLCN-541 security review): this step holds `statuses: write`,
+        # so it MUST NOT execute the PR-head copy of the script — a malicious PR
+        # could replace the script body to forge `manifold-review=success` with no
+        # reviewer (poisoned-pipeline-execution / Q9 bypass). Execute the TRUSTED
+        # base-ref version instead (`git show origin/<base>:<path>`). The script
+        # operates only on SHAs passed via env + object-level git, so it needs
+        # nothing from the PR working tree.
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin "$BASE_REF"
+          script_path="bin/ci/reattest-manifold-review.sh"
+          if git cat-file -e "origin/${BASE_REF}:${script_path}" 2>/dev/null; then
+            git show "origin/${BASE_REF}:${script_path}" | bash
+          else
+            echo "[reattest] ${script_path} not present on ${BASE_REF} yet (bootstrap PR) — skipping"
+          fi
