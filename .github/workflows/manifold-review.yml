@@ -1,0 +1,42 @@
+# manifold-review — sessionless reviewer gate (VLCN-664 Step B).
+#
+# Thin caller of the shared `manifold-review-gate` composite action in
+# vulcn-manifold (the manifold-eval pattern, VLCN-434). The reviewer body runs
+# `bin/manifold`, which lives ONLY in vulcn-manifold — so this repo does NOT
+# check itself out; the action (fetched at the pinned SHA) carries manifold's
+# code, and `bin/manifold review <full-PR-URL>` resolves THIS repo from the URL
+# and posts `manifold-review` back to it (cross-repo; openrouter = diff-only,
+# PPE-safe; role files staged from the pinned action checkout via
+# --use-working-tree).
+name: manifold-review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number or URL to review via the CI/OpenRouter fallback"
+        required: true
+
+permissions:
+  contents: read
+  statuses: write
+  pull-requests: read
+
+concurrency:
+  group: manifold-review-ci-${{ github.event.pull_request.number || github.event.inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: manifold-review gate
+        uses: olivergale/vulcn-manifold/.github/actions/manifold-review-gate@4a9a0d0e1bfa59c64ea6ad073c6204ef83b97dd9
+        with:
+          pr: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+          repo: ${{ github.repository }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
