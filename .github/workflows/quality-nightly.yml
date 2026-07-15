@@ -136,7 +136,7 @@ jobs:
         run: $INSTALL_CMD
 
       - name: Run Lighthouse CI (report-only, median of 3+)
-        run: npx --yes @lhci/cli autorun
+        run: npx --yes @lhci/cli@0.15.x autorun
 
       - name: Upload Lighthouse results
         if: ${{ !cancelled() }}
