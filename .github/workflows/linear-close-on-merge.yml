@@ -1,0 +1,140 @@
+# linear-close-on-merge — POSTs merged-PR metadata to omnibus so Linear
+# issues referenced by the PR (VLCN-NNN, Closes VLCN-NNN, etc.) move to
+# Done automatically once the PR lands on main.
+#
+# References (docs/architecture.md):
+#   Q19  Promotion path — merge to main is the boundary event we observe
+#   Inv  Linear is the canonical tracker for v3 issues; status drift is a
+#        known cycle-N audit finding. This workflow is the auto-reconcile
+#        leg of `/linear-reconcile` (which stays the operator-driven sweep).
+#
+# Boundary: this workflow only NOTIFIES omnibus. The actual Linear mutation
+# (issue lookup, status transition, comment) is omnibus's surface — it owns
+# the linear backend credentials + the close policy. The workflow knows
+# nothing about Linear API shape; if the close policy changes, only omnibus
+# changes.
+#
+# Trigger: pull_request.closed gated on `merged == true`. We never fire on
+# unmerged closures (PR rejected, branch deleted unmerged, etc.) because
+# those should not advance Linear state.
+#
+# Operator prereqs (one-time, per repo):
+#   1. `OMNIBUS_URL` repo secret — base URL of the omnibus HTTP surface.
+#      Endpoint called: `${OMNIBUS_URL}/github/pr-merged`.
+#   2. `OMNIBUS_GITHUB_TOKEN` repo secret — shared bearer token; omnibus
+#      rejects requests whose `Authorization: Bearer <token>` header
+#      doesn't match. Rotate by re-issuing on both ends.
+#
+# Bootstrap behaviour: if either secret is absent, the workflow logs a
+# warning and exits 0. This is deliberate — the workflow lands in every v3
+# repo before omnibus is reachable from public CI, and we don't want a
+# missing-secret to block merges. Once both secrets are set, every merge
+# fires a notify.
+#
+# Failure mode: if the POST returns non-2xx, the workflow fails the job
+# (operator-visible signal) but the merge is already complete — this
+# workflow runs post-merge by design, so a failed notify is a reconcile
+# task for `/linear-reconcile`, not a merge block.
+#
+# Concurrency: per-PR, no cancellation. Every merge fires exactly one
+# notify; out-of-order delivery is fine because omnibus is idempotent on
+# `pr_url + head_sha`.
+
+name: linear-close-on-merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: linear-close-on-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  notify-omnibus:
+    name: notify-omnibus
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Check omnibus secrets
+        id: check
+        env:
+          OMNIBUS_URL: ${{ secrets.OMNIBUS_URL }}
+          OMNIBUS_GITHUB_TOKEN: ${{ secrets.OMNIBUS_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$OMNIBUS_URL" ] || [ -z "$OMNIBUS_GITHUB_TOKEN" ]; then
+            echo "::warning::OMNIBUS_URL or OMNIBUS_GITHUB_TOKEN not configured; skipping notify. Linear reconcile must be run manually."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: POST merged-PR metadata to omnibus
+        if: steps.check.outputs.configured == 'true'
+        env:
+          OMNIBUS_URL: ${{ secrets.OMNIBUS_URL }}
+          OMNIBUS_GITHUB_TOKEN: ${{ secrets.OMNIBUS_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Build the JSON payload via jq so PR_TITLE / PR_BODY are properly
+          # escaped (titles can contain quotes, bodies can contain newlines
+          # + arbitrary markdown).
+          payload=$(jq -n \
+            --arg repo            "$REPO" \
+            --arg pr_url          "$PR_URL" \
+            --argjson pr_number   "$PR_NUMBER" \
+            --arg pr_title        "$PR_TITLE" \
+            --arg pr_body         "${PR_BODY:-}" \
+            --arg pr_head_ref     "$PR_HEAD_REF" \
+            --arg pr_base_ref     "$PR_BASE_REF" \
+            --arg pr_head_sha     "$PR_HEAD_SHA" \
+            --arg pr_merge_sha    "${PR_MERGE_SHA:-}" \
+            --arg pr_merged_at    "$PR_MERGED_AT" \
+            --arg pr_merged_by    "${PR_MERGED_BY:-}" \
+            --arg pr_author       "$PR_AUTHOR" \
+            '{
+              repo:         $repo,
+              pr_number:    $pr_number,
+              pr_url:       $pr_url,
+              pr_title:     $pr_title,
+              pr_body:      $pr_body,
+              pr_head_ref:  $pr_head_ref,
+              pr_base_ref:  $pr_base_ref,
+              pr_head_sha:  $pr_head_sha,
+              pr_merge_sha: $pr_merge_sha,
+              pr_merged_at: $pr_merged_at,
+              pr_merged_by: $pr_merged_by,
+              pr_author:    $pr_author
+            }')
+
+          # --fail-with-body: non-2xx exits non-zero and dumps the body so
+          # the job log captures the omnibus error.
+          # -S: show errors even when -s (silent progress) is on.
+          curl --fail-with-body -sS \
+            -X POST "${OMNIBUS_URL%/}/github/pr-merged" \
+            -H "Authorization: Bearer $OMNIBUS_GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
+
+          echo
+          echo "Notified omnibus: PR #${PR_NUMBER} (${REPO}) merged."
