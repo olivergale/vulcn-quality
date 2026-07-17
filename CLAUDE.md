@@ -4,8 +4,8 @@
 > service. No Supabase, no Edge Functions, **no Deno**: this is an npm/Node repo
 > (vitest + eslint + tsc), so the fleet's deno preflight pin does not apply here.
 > Canonical scope + decisions: Forum architecture doc `b96b17c1`; build-fidelity
-> doctrine: Forum doc `0db70efc`; platform North Star `a8873cf0`. This file is agent
-> context for the `quality` repo specifically.
+> doctrine: Forum doc `0db70efc`. This file is agent context for the `quality`
+> repo specifically.
 
 ## What this repo is
 
@@ -35,7 +35,7 @@ to consumer CI.
 
 **A surface with no registered consumer is mis-homed.** This is the
 gate-with-nothing-to-gate lesson: a `module-contract` surface was built here
-(PR #6, 2026-06-08) and reverted the next morning (PR #7) because its real home
+(PR #6) and reverted the next morning (PR #7) because its real home
 was the host repo's CI — quality had nothing to run it against.
 
 - `surfaces.registry.json` (repo root) is the registration manifest: one row per
@@ -94,15 +94,15 @@ Non-code artifacts:
 | Artifact            | Convention                                                                  |
 | ------------------- | --------------------------------------------------------------------------- |
 | Repo path           | `~/projects/vulcn/quality/`                                                 |
-| GitHub repo         | `olivergale/vulcn-quality` (**public** since 2026-06-10 — operator call, VLCN-602: consumers npm-install the git-dep anonymously; gate action runs via read-only deploy key)                                        |
+| GitHub repo         | `olivergale/vulcn-quality` (**public** — operator call, VLCN-602: consumers npm-install the git-dep anonymously; gate action runs via read-only deploy key)                                        |
 | User-facing display | "Vulcn Quality" titlecase                                                   |
-| npm name            | `@vulcn/quality` (consumed as a PINNED git dep `github:olivergale/vulcn-quality#vX.Y.Z` — git TAGS are the consumption pin; `package.json` version lags them, bump tracked VLCN-613) |
+| npm name            | `@vulcn/quality` (consumed as a PINNED git dep `github:olivergale/vulcn-quality#vX.Y.Z` — git TAGS are the consumption pin) |
 | Branch shape        | `WO-YYYY-MM-DD-NNN/<kebab>` via `bin/next-slug.sh` (see Ship loop)          |
 
 ## CI checks
 
-Required (branch protection on `main`, `enforce_admins=true` — verified via
-`gh api .../branches/main/protection` 2026-06-09):
+Required (branch protection on `main`, `enforce_admins=true` — the live
+authority is `gh api .../branches/main/protection`):
 
 - **`manifold-eval`** — `.github/workflows/manifold-eval.yml`, a thin caller of
   the shared `manifold-eval-gate` composite action (vulcn-manifold), **node
@@ -112,7 +112,6 @@ Required (branch protection on `main`, `enforce_admins=true` — verified via
   by `bin/manifold review <PR-url>` (vulcn-manifold reviewer trio). Without it
   the merge stays blocked even on green CI.
 
-Informational: none today — there are no other PR-triggered workflows here.
 `.github/workflows/quality.yml` and `quality-nightly.yml` are `workflow_call`
 REUSABLE workflows that CONSUMER repos call from their own CI; they never run on
 this repo's PRs and are not checks here.
@@ -123,7 +122,7 @@ this repo's PRs and are not checks here.
 npm ci                 # install (lockfile)
 npm run lint           # eslint .
 npm run typecheck      # tsc --noEmit
-npm test               # vitest run (60+ unit tests, browser-free)
+npm test               # vitest run (unit tests, browser-free)
 
 # Branch (WO-tracked) — allocate slug atomically, then branch
 SLUG=$(~/projects/vulcn/manifold/bin/next-slug.sh)
@@ -152,7 +151,8 @@ versa).
 - Forum `b96b17c1` — canonical scope + decisions (surfaces, tiers, merge-gate
   semantics)
 - Forum `0db70efc` — build-fidelity doctrine (P2.7 consumer rule; VLCN-630/631)
-- Forum `a8873cf0` — platform North Star (read first for architectural work)
+- `~/projects/vulcn/manifold/docs/architecture.md` — platform North Star
+  pointer (head-resolving stub; read first for architectural work)
 - `README.md` — consumer-facing usage (tier opt-in, nightly, fan-out-review)
 - `~/.claude/projects/-Users-OG-projects/memory/feedback_v3_self_merge_on_green.md`
 - `~/.claude/projects/-Users-OG-projects/memory/feedback_v3_does_not_route_through_omv2_bin_wo.md`
